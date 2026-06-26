@@ -1137,8 +1137,8 @@ i[data-lucide] { vertical-align: middle; flex-shrink: 0; }
 }
 
 .carteirinha__logo {
-  width: 75px;
-  height: 75px;
+  width: 100px;
+  height: 100px;
   object-fit: contain;
   margin-left: 10px;
   flex-shrink: 0;
