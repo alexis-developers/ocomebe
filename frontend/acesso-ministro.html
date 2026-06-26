@@ -7,6 +7,7 @@
   <meta name="description" content="Acesse sua carteirinha digital da OCOMEBE">
   <link rel="icon" type="image/png" href="logo-ocomebe.png">
   <link rel="stylesheet" href="style.css?v=2.0.0">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body>
 
@@ -131,7 +132,7 @@
                 
                 <div class="carteirinha__foto" id="fotoContainer">
                   <div class="carteirinha__foto-placeholder">
-                    <span style="font-size:2rem">👤</span>
+                    <i data-lucide="user" style="width:32px;height:32px"></i>
                     <span>FOTO</span>
                   </div>
                 </div>
@@ -149,7 +150,7 @@
       </div>
 
       <div class="carteira-actions">
-        <button class="btn btn--gold" onclick="ampliarCarteira()">📱 Ampliar Carteirinha</button>
+        <button class="btn btn--gold" onclick="ampliarCarteira()"><i data-lucide="maximize-2" style="width:18px;height:18px"></i> Ampliar Carteirinha</button>
         <button class="btn btn--outline-navy" onclick="fecharCarteira()">Fechar</button>
       </div>
     </div>
@@ -312,6 +313,8 @@
         carteirinha.webkitRequestFullscreen();
       }
     }
+
+    lucide.createIcons();
   </script>
 </body>
 </html>
