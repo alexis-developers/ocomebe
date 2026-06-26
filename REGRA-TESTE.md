@@ -32,7 +32,7 @@ cd backend
 npx wrangler deploy
 
 # Health check
-curl https://ocomebe-api.dev-teste.workers.dev/api/health
+curl https://ocomebe-api-v2.dev-teste.workers.dev/api/health
 ```
 
 **Esperado:**
@@ -48,21 +48,21 @@ curl https://ocomebe-api.dev-teste.workers.dev/api/health
 
 ```bash
 # CadastroGeral
-curl https://ocomebe-api.dev-teste.workers.dev/api/CadastroGeral
+curl https://ocomebe-api-v2.dev-teste.workers.dev/api/CadastroGeral
 
 # Carteira por CPF
-curl -X POST https://ocomebe-api.dev-teste.workers.dev/api/carteira/acesso \
+curl -X POST https://ocomebe-api-v2.dev-teste.workers.dev/api/carteira/acesso \
   -H "Content-Type: application/json" \
   -d '{"cpf":"12345678901"}'
 
 # Noticias
-curl https://ocomebe-api.dev-teste.workers.dev/api/Noticia
+curl https://ocomebe-api-v2.dev-teste.workers.dev/api/Noticia
 
 # Eventos
-curl https://ocomebe-api.dev-teste.workers.dev/api/Evento
+curl https://ocomebe-api-v2.dev-teste.workers.dev/api/Evento
 
 # Configuracoes
-curl https://ocomebe-api.dev-teste.workers.dev/api/Configuracoes
+curl https://ocomebe-api-v2.dev-teste.workers.dev/api/Configuracoes
 ```
 
 **Esperado:** Todos retornam JSON valido com dados
@@ -124,6 +124,6 @@ npx wrangler d1 execute ocomebe-db-backup --remote --command "SELECT COUNT(*) FR
 | O que testar | URL |
 |-------------|-----|
 | Frontend online | `https://ocombebe.pages.dev/` |
-| API saudavel | `https://ocomebe-api.dev-teste.workers.dev/api/health` |
+| API saudavel | `https://ocomebe-api-v2.dev-teste.workers.dev/api/health` |
 | Carteirinha | `POST /api/carteira/acesso` com `{"cpf":"12345678901"}` |
 | Admin | `https://ocombebe.pages.dev/admin.html` (senha: `ocomeberio2019`) |
