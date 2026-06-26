@@ -7,5 +7,10 @@ binding = "DB"
 database_name = "ocomebe-db"
 database_id = "94d38319-21ee-4687-bbb6-ce03ece12a7b"
 
+[[d1_databases]]
+binding = "DB_BACKUP"
+database_name = "ocomebe-db-backup"
+database_id = "49ec310e-85e1-4f6f-b542-5b4dcd9d6ac5"
+
 [vars]
 ENVIRONMENT = "production"
