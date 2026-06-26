@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Administração - OCOMEBE</title>
+  <meta name="description" content="Painel de controle administrative da OCOMEBE">
+  <link rel="icon" type="image/png" href="logo-ocomebe.png">
+  <link rel="stylesheet" href="style.css">
+  <script>
+    if (sessionStorage.getItem('ocomebe_admin') !== 'ocomeberio2019') {
+      window.location.href = 'index.html';
+    }
+  </script>
+</head>
+<body>
+
+  <header class="header" id="header">
+    <div class="container header__inner">
+      <a href="index.html" class="header__brand">
+        <img src="logo-ocomebe.png" alt="Logo OCOMEBE" class="header__logo">
+        <span class="header__name">Ordem e Conselho Fraternal de Ministros Evangélico</span>
+      </a>
+      <nav class="header__nav" id="nav">
+        <a href="index.html">Início</a>
+        <a href="acesso-ministro.html">Área do Ministro</a>
+        <button onclick="logoutAdmin()" class="btn btn--outline-gold btn--sm" style="margin-left:15px">Sair</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="admin-page" style="padding-top: 130px; padding-bottom: 80px; min-height: 80vh; background: #f8fafc;">
+    <div class="container">
+      <div class="admin-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 30px; flex-wrap: wrap; gap:16px;">
+        <div>
+          <h1 style="font-size:2rem; color:var(--navy-dark); font-family:var(--font-serif)">Painel Administrativo</h1>
+          <p style="color:var(--text-muted)">Gerenciamento do Cadastro Geral de Ministros</p>
+        </div>
+        <div style="display:flex; gap:12px;">
+          <button class="btn btn--gold" onclick="abrirModalCadastro()">+ Novo Ministro</button>
+          <button class="btn btn--outline-navy" onclick="logoutAdmin()">Sair</button>
+        </div>
+      </div>
+
+      <!-- BUSCA -->
+      <div class="admin-search-box" style="background:#fff; padding:16px 20px; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 24px;">
+        <input 
+          type="text" 
+          id="buscaInput" 
+          placeholder="🔍 Buscar ministro por nome, CPF ou número de inscrição..." 
+          style="width:100%; padding:10px 14px; border:1px solid var(--border); border-radius:var(--radius); font-size:1rem;"
+          oninput="filtrarMinistros()"
+        >
+      </div>
+
+      <!-- TABELA -->
+      <div class="admin-table-container" style="background:#fff; border-radius:var(--radius); border: 1px solid var(--border); overflow-x:auto;">
+        <table class="admin-table" style="width:100%; border-collapse:collapse; text-align:left; font-size:0.95rem;">
+          <thead>
+            <tr style="background:var(--navy-dark); color:#fff; border-bottom:2px solid var(--gold);">
+              <th style="padding:16px 20px;">Inscrição</th>
+              <th style="padding:16px 20px;">Nome</th>
+              <th style="padding:16px 20px;">CPF</th>
+              <th style="padding:16px 20px;">Função / Ministério</th>
+              <th style="padding:16px 20px;">Validade</th>
+              <th style="padding:16px 20px;">Anuidade</th>
+              <th style="padding:16px 20px; text-align:center;">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="ministrosTbody">
+            <tr>
+              <td colspan="7" style="padding:40px; text-align:center; color:var(--text-muted);">Carregando dados dos ministros...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- MODAL DE CADASTRO/EDIÇÃO -->
+  <div id="cadastroModal" class="modal-overlay" style="display:none">
+    <div class="modal" style="max-width: 800px;">
+      <button class="modal__close" onclick="fecharModalCadastro()">&times;</button>
+      
+      <h2 id="modalTitulo" style="font-size:1.6rem; color:var(--navy-dark); margin-bottom:24px; font-family:var(--font-serif)">Cadastrar Novo Ministro</h2>
+      
+      <form id="cadastroForm" onsubmit="salvarMinistro(event)" class="acesso-form" style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+        <input type="hidden" id="ministroId">
+        
+        <div class="acesso-form__field" style="grid-column: span 2; margin-bottom:12px;">
+          <label for="nome" style="margin-bottom:4px; font-size:0.85rem">Nome Completo *</label>
+          <input type="text" id="nome" required class="acesso-form__input" style="padding:10px 12px; font-size:1rem" placeholder="Ex: Pr. João da Silva">
+        </div>
+
+        <div class="acesso-form__field" style="margin-bottom:12px;">
+          <label for="cpf" style="margin-bottom:4px; font-size:0.85rem">CPF *</label>
+          <input type="text" id="cpf" required maxlength="14" class="acesso-form__input" style="padding:10px 12px; font-size:1rem" placeholder="000.000.000-00">
+        </div>
+
+        <div class="acesso-form__field" style="margin-bottom:12px;">
+          <label for="identidade" style="margin-bottom:4px; font-size:0.85rem">RG / Identidade</label>
+          <input type="text" id="identidade" class="acesso-form__input" style="padding:10px 12px; font-size:1rem" placeholder="Ex: 1234567-8 SSP">
+        </div>
+
+        <div class="acesso-form__field" style="margin-bottom:12px;">
+          <label for="dataNascimento" style="margin-bottom:4px; font-size:0.85rem">Data de Nascimento</label>
+          <input type="date" id="dataNascimento" class="acesso-form__input" style="padding:10px 12px; font-size:1rem">
+        </div>
+
+        <div class="acesso-form__field" style="margin-bottom:12px;">
+          <label for="naturalidade" style="margin-bottom:4px; font-size:0.85rem">Naturalidade (Cidade/UF)</label>
+          <input type="text" id="naturalidade" class="acesso-form__input" style="padding:10px 12px; font-size:1rem" placeholder="Ex: Rio de Janeiro/RJ">
+        </div>
+
+        <div class="acesso-form__field" style="margin-bottom:12px;">
+          <label for="funcao" style="margin-bottom:4px; font-size:0.85rem">Função / Cargo *</label>
+          <input type="text" id="funcao" required class="acesso-form__input" style="padding:10px 12px; font-size:1rem" placeholder="Ex: Pastor Presidente, Ministro, Missionária">
+        </div>
+
+        <div class="acesso-form__field" style="margin-bottom:12px;">
+          <label for="ministerio" style="margin-bottom:4px; font-size:0.85rem">Ministério / Igreja</label>
+          <input type="text" id="ministerio" class="acesso-form__input" style="padding:10px 12px; font-size:1rem" placeholder="Ex: Assembleia de Deus">
+        </div>
+
+        <div class="acesso-form__field" style="margin-bottom:12px;">
+          <label for="numeroInscricao" style="margin-bottom:4px; font-size:0.85rem">Número de Inscrição *</label>
+          <input type="text" id="numeroInscricao" required class="acesso-form__input" style="padding:10px 12px; font-size:1rem" placeholder="Ex: OCOMEBE-999">
+        </div>
+
+        <div class="acesso-form__field" style="margin-bottom:12px;">
+          <label for="validadeCarteirinha" style="margin-bottom:4px; font-size:0.85rem">Validade da Carteirinha</label>
+          <input type="date" id="validadeCarteirinha" class="acesso-form__input" style="padding:10px 12px; font-size:1rem">
+        </div>
+
+        <div class="acesso-form__field" style="margin-bottom:12px;">
+          <label for="statusAnuidade" style="margin-bottom:4px; font-size:0.85rem">Status da Anuidade *</label>
+          <select id="statusAnuidade" required class="acesso-form__input" style="padding:10px 12px; font-size:1rem; height:45px">
+            <option value="em_dia">PAGO (Em Dia)</option>
+            <option value="pendente">PENDENTE</option>
+            <option value="vencida">INADIMPLENTE (Vencido)</option>
+            <option value="cancelada">CANCELADA</option>
+          </select>
+        </div>
+
+        <div class="acesso-form__field" style="margin-bottom:12px;">
+          <label for="anuidadePagaAte" style="margin-bottom:4px; font-size:0.85rem">Pago Até</label>
+          <input type="date" id="anuidadePagaAte" class="acesso-form__input" style="padding:10px 12px; font-size:1rem">
+        </div>
+
+        <div class="acesso-form__field" style="margin-bottom:12px;">
+          <label for="telefone" style="margin-bottom:4px; font-size:0.85rem">Telefone</label>
+          <input type="text" id="telefone" class="acesso-form__input" style="padding:10px 12px; font-size:1rem" placeholder="(00) 00000-0000">
+        </div>
+
+        <div class="acesso-form__field" style="margin-bottom:12px;">
+          <label for="email" style="margin-bottom:4px; font-size:0.85rem">E-mail</label>
+          <input type="email" id="email" class="acesso-form__input" style="padding:10px 12px; font-size:1rem" placeholder="pastor@email.com">
+        </div>
+
+        <div class="acesso-form__field" style="grid-column: span 2; margin-bottom:16px;">
+          <label for="fotoUrl" style="margin-bottom:4px; font-size:0.85rem">Link da Foto do Ministro (URL da Imagem)</label>
+          <input type="url" id="fotoUrl" class="acesso-form__input" style="padding:10px 12px; font-size:1rem" placeholder="https://exemplo.com/fotos/pastor.jpg">
+        </div>
+
+        <div style="grid-column: span 2; display:flex; justify-content:flex-end; gap:12px; margin-top:10px;">
+          <button type="button" class="btn btn--outline-navy" onclick="fecharModalCadastro()">Cancelar</button>
+          <button type="submit" class="btn btn--gold" id="salvarBtn">Salvar Dados</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer__bottom">
+        <span>&copy; 2024 OCOMEBE — Convenção de Pastores Unidos. Todos os direitos reservados.</span>
+      </div>
+      <p class="footer__dev">Desenvolvido por <a href="https://desenvolvimentodesites.dev.br/" target="_blank" rel="noopener">Alexis Marketing &amp; Dev</a></p>
+    </div>
+  </footer>
+
+  <script>
+    const API_URL = 'https://ocomebe-api.dev-teste.workers.dev';
+    let todosMinistros = [];
+
+    // Carregar ministros ao iniciar
+    document.addEventListener('DOMContentLoaded', () => {
+      carregarMinistros();
+      
+      // Aplicar máscara de CPF no input
+      document.getElementById('cpf').addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length <= 11) {
+          value = value
+            .replace(/(\d{3})(\d)/, '$1.$2')
+            .replace(/(\d{3})(\d)/, '$1.$2')
+            .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+        }
+        e.target.value = value;
+      });
+    });
+
+    async function carregarMinistros() {
+      const tbody = document.getElementById('ministrosTbody');
+      tbody.innerHTML = `<tr><td colspan="7" style="padding:40px; text-align:center; color:var(--text-muted);">Carregando dados dos ministros...</td></tr>`;
+
+      try {
+        const response = await fetch(`${API_URL}/api/CadastroGeral`);
+        if (!response.ok) throw new Error('Erro ao carregar banco de dados');
+        
+        todosMinistros = await response.json();
+        
+        // Ordenar por nome por padrão
+        todosMinistros.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+        
+        renderizarTabela(todosMinistros);
+      } catch (error) {
+        tbody.innerHTML = `<tr><td colspan="7" style="padding:40px; text-align:center; color:#dc2626; font-weight:600;">⚠️ ${error.message}. Verifique a conexão com o Worker.</td></tr>`;
+      }
+    }
+
+    function renderizarTabela(ministros) {
+      const tbody = document.getElementById('ministrosTbody');
+      
+      if (ministros.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="padding:40px; text-align:center; color:var(--text-muted);">Nenhum ministro cadastrado ou encontrado.</td></tr>`;
+        return;
+      }
+
+      const statusMap = {
+        'em_dia': { label: 'PAGO', color: '#16a34a', bg: '#f0fdf4' },
+        'pendente': { label: 'PENDENTE', color: '#d97706', bg: '#fffbeb' },
+        'vencida': { label: 'INADIMPLENTE', color: '#dc2626', bg: '#fef2f2' },
+        'cancelada': { label: 'CANCELADA', color: '#4b5563', bg: '#f3f4f6' }
+      };
+
+      tbody.innerHTML = ministros.map(m => {
+        const status = statusMap[m.statusAnuidade] || statusMap['pendente'];
+        const validade = m.validadeCarteirinha ? formatarDataISO(m.validadeCarteirinha) : 'Não definida';
+        
+        return `
+          <tr style="border-bottom:1px solid var(--border); transition: background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='none'">
+            <td style="padding:14px 20px; font-weight:700; color:var(--navy-dark);">${m.numeroInscricao || '-'}</td>
+            <td style="padding:14px 20px; font-weight:600; color:#334155;">${m.nome || '-'}</td>
+            <td style="padding:14px 20px; font-family:monospace; color:#475569;">${formatarCPF(m.cpf)}</td>
+            <td style="padding:14px 20px; color:#475569;">
+              <div style="font-weight:600; color:#334155;">${m.funcao || 'Ministro'}</div>
+              <div style="font-size:0.8rem; color:var(--text-muted);">${m.ministerio || '-'}</div>
+            </td>
+            <td style="padding:14px 20px; color:#475569;">${validade}</td>
+            <td style="padding:14px 20px;">
+              <span style="display:inline-block; padding:4px 10px; border-radius:9999px; font-size:0.75rem; font-weight:700; color:${status.color}; background:${status.bg}; border:1px solid ${status.color}33;">
+                ${status.label}
+              </span>
+            </td>
+            <td style="padding:14px 20px; text-align:center;">
+              <div style="display:flex; gap:8px; justify-content:center;">
+                <button onclick="abrirModalEdicao('${m.id}')" class="btn btn--outline-navy btn--sm" style="padding:4px 10px; font-size:0.8rem;">Editar</button>
+                <button onclick="excluirMinistro('${m.id}')" class="btn btn--outline-red btn--sm" style="padding:4px 10px; font-size:0.8rem; border-color:#dc2626; color:#dc2626;">Excluir</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function filtrarMinistros() {
+      const termo = document.getElementById('buscaInput').value.toLowerCase().trim();
+      if (!termo) {
+        renderizarTabela(todosMinistros);
+        return;
+      }
+      
+      const filtrados = todosMinistros.filter(m => 
+        (m.nome || '').toLowerCase().includes(termo) ||
+        (m.cpf || '').replace(/\D/g, '').includes(termo.replace(/\D/g, '')) ||
+        (m.numeroInscricao || '').toLowerCase().includes(termo) ||
+        (m.funcao || '').toLowerCase().includes(termo) ||
+        (m.ministerio || '').toLowerCase().includes(termo)
+      );
+      
+      renderizarTabela(filtrados);
+    }
+
+    function abrirModalCadastro() {
+      document.getElementById('modalTitulo').textContent = 'Cadastrar Novo Ministro';
+      document.getElementById('cadastroForm').reset();
+      document.getElementById('ministroId').value = '';
+      document.getElementById('cadastroModal').style.display = 'flex';
+    }
+
+    function abrirModalEdicao(id) {
+      const ministro = todosMinistros.find(m => m.id === id);
+      if (!ministro) return;
+
+      document.getElementById('modalTitulo').textContent = 'Editar Ministro';
+      document.getElementById('ministroId').value = ministro.id;
+      document.getElementById('nome').value = ministro.nome || '';
+      document.getElementById('cpf').value = formatarCPF(ministro.cpf) || '';
+      document.getElementById('identidade').value = ministro.identidade || '';
+      document.getElementById('dataNascimento').value = filtrarDataCampo(ministro.dataNascimento) || '';
+      document.getElementById('naturalidade').value = ministro.naturalidade || '';
+      document.getElementById('funcao').value = ministro.funcao || '';
+      document.getElementById('ministerio').value = ministro.ministerio || '';
+      document.getElementById('numeroInscricao').value = ministro.numeroInscricao || '';
+      document.getElementById('validadeCarteirinha').value = filtrarDataCampo(ministro.validadeCarteirinha) || '';
+      document.getElementById('statusAnuidade').value = ministro.statusAnuidade || 'pendente';
+      document.getElementById('anuidadePagaAte').value = filtrarDataCampo(ministro.anuidadePagaAte) || '';
+      document.getElementById('telefone').value = ministro.telefone || '';
+      document.getElementById('email').value = ministro.email || '';
+      document.getElementById('fotoUrl').value = ministro.fotoUrl || '';
+
+      document.getElementById('cadastroModal').style.display = 'flex';
+    }
+
+    function fecharModalCadastro() {
+      document.getElementById('cadastroModal').style.display = 'none';
+    }
+
+    async function salvarMinistro(e) {
+      e.preventDefault();
+      const id = document.getElementById('ministroId').value;
+      const salvarBtn = document.getElementById('salvarBtn');
+      salvarBtn.disabled = true;
+      salvarBtn.textContent = 'Gravando...';
+
+      const cpfLimpo = document.getElementById('cpf').value.replace(/\D/g, '');
+
+      const dados = {
+        nome: document.getElementById('nome').value,
+        cpf: cpfLimpo,
+        identidade: document.getElementById('identidade').value,
+        dataNascimento: document.getElementById('dataNascimento').value,
+        naturalidade: document.getElementById('naturalidade').value,
+        funcao: document.getElementById('funcao').value,
+        ministerio: document.getElementById('ministerio').value,
+        numeroInscricao: document.getElementById('numeroInscricao').value,
+        validadeCarteirinha: document.getElementById('validadeCarteirinha').value,
+        statusAnuidade: document.getElementById('statusAnuidade').value,
+        anuidadePagaAte: document.getElementById('anuidadePagaAte').value,
+        telefone: document.getElementById('telefone').value,
+        email: document.getElementById('email').value,
+        fotoUrl: document.getElementById('fotoUrl').value
+      };
+
+      try {
+        let response;
+        if (id) {
+          // Edição
+          response = await fetch(`${API_URL}/api/CadastroGeral/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dados)
+          });
+        } else {
+          // Cadastro
+          response = await fetch(`${API_URL}/api/CadastroGeral`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dados)
+          });
+        }
+
+        if (!response.ok) throw new Error('Falha ao salvar dados na API.');
+
+        fecharModalCadastro();
+        await carregarMinistros();
+        alert('Cadastro ministerial salvo com sucesso!');
+      } catch (error) {
+        alert(`Erro ao salvar: ${error.message}`);
+      } finally {
+        salvarBtn.disabled = false;
+        salvarBtn.textContent = 'Salvar Dados';
+      }
+    }
+
+    async function excluirMinistro(id) {
+      const ministro = todosMinistros.find(m => m.id === id);
+      if (!ministro) return;
+
+      if (!confirm(`Tem certeza que deseja EXCLUIR permanentemente o cadastro de ${ministro.nome}?`)) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/api/CadastroGeral/${id}`, {
+          method: 'DELETE'
+        });
+
+        if (!response.ok) throw new Error('Falha ao excluir registro na API.');
+
+        await carregarMinistros();
+        alert('Ministro excluído com sucesso.');
+      } catch (error) {
+        alert(`Erro ao excluir: ${error.message}`);
+      }
+    }
+
+    function logoutAdmin() {
+      sessionStorage.removeItem('ocomebe_admin');
+      window.location.href = 'index.html';
+    }
+
+    function formatarCPF(cpf) {
+      if (!cpf) return '';
+      const numeros = cpf.replace(/\D/g, '');
+      if (numeros.length !== 11) return cpf;
+      return numeros.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+    }
+
+    function formatarDataISO(dataStr) {
+      if (!dataStr) return '';
+      try {
+        const d = new Date(dataStr);
+        if (isNaN(d.getTime())) return dataStr;
+        // Ajustar fuso
+        const dateObj = new Date(d.getTime() + d.getTimezoneOffset() * 60000);
+        return dateObj.toLocaleDateString('pt-BR');
+      } catch (e) {
+        return dataStr;
+      }
+    }
+
+    function filtrarDataCampo(dataStr) {
+      if (!dataStr) return '';
+      if (dataStr.includes('T')) {
+        return dataStr.split('T')[0];
+      }
+      return dataStr;
+    }
+  </script>
+</body>
+</html>
