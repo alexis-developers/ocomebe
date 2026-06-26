@@ -156,37 +156,37 @@
             <div class="timeline__title">Convenção Nacional: Edificando sobre a Rocha</div>
             <div class="timeline__desc">Mais de 2.500 pastores reunidos para debate de ética ministerial.</div>
           </div>
-            <div class="timeline__links">
-              <a href="#" class="timeline__link"><i data-lucide="file-text" style="width:14px;height:14px"></i> Atas</a>
-              <a href="#" class="timeline__link"><i data-lucide="image" style="width:14px;height:14px"></i> Galeria</a>
-            </div>
+          <div class="timeline__links">
+            <a href="#" class="timeline__link"><i data-lucide="file-text" style="width:14px;height:14px"></i> Atas</a>
+            <a href="#" class="timeline__link"><i data-lucide="image" style="width:14px;height:14px"></i> Galeria</a>
           </div>
-          <div class="timeline__item">
-            <div>
-              <div class="timeline__year">2022</div>
-              <span class="timeline__city">E. Santo</span>
-            </div>
-            <div>
-              <div class="timeline__title">A Igreja na Era Pós-Pandemia</div>
-              <div class="timeline__desc">Estratégias de revitalização e apoio psicológico para líderes.</div>
-            </div>
-            <div class="timeline__links">
-              <a href="#" class="timeline__link"><i data-lucide="file-text" style="width:14px;height:14px"></i> Atas</a>
-              <a href="#" class="timeline__link"><i data-lucide="image" style="width:14px;height:14px"></i> Galeria</a>
-            </div>
+        </div>
+        <div class="timeline__item">
+          <div>
+            <div class="timeline__year">2022</div>
+            <span class="timeline__city">E. Santo</span>
           </div>
-          <div class="timeline__item">
-            <div>
-              <div class="timeline__year">2021</div>
-              <span class="timeline__city">Online</span>
-            </div>
-            <div>
-              <div class="timeline__title">Congresso Global Extraordinário</div>
-              <div class="timeline__desc">Convenção realizada em ambiente digital com participantes de 12 países.</div>
-            </div>
-            <div class="timeline__links">
-              <a href="#" class="timeline__link"><i data-lucide="file-text" style="width:14px;height:14px"></i> Resumo</a>
-              <a href="#" class="timeline__link"><i data-lucide="video" style="width:14px;height:14px"></i> Vídeos</a>
+          <div>
+            <div class="timeline__title">A Igreja na Era Pós-Pandemia</div>
+            <div class="timeline__desc">Estratégias de revitalização e apoio psicológico para líderes.</div>
+          </div>
+          <div class="timeline__links">
+            <a href="#" class="timeline__link"><i data-lucide="file-text" style="width:14px;height:14px"></i> Atas</a>
+            <a href="#" class="timeline__link"><i data-lucide="image" style="width:14px;height:14px"></i> Galeria</a>
+          </div>
+        </div>
+        <div class="timeline__item">
+          <div>
+            <div class="timeline__year">2021</div>
+            <span class="timeline__city">Online</span>
+          </div>
+          <div>
+            <div class="timeline__title">Congresso Global Extraordinário</div>
+            <div class="timeline__desc">Convenção realizada em ambiente digital com participantes de 12 países.</div>
+          </div>
+          <div class="timeline__links">
+            <a href="#" class="timeline__link"><i data-lucide="file-text" style="width:14px;height:14px"></i> Resumo</a>
+            <a href="#" class="timeline__link"><i data-lucide="video" style="width:14px;height:14px"></i> Vídeos</a>
           </div>
         </div>
       </div>
@@ -296,11 +296,28 @@
           <a href="termos.html">Termos de Uso</a>
         </div>
       </div>
-      <p class="footer__dev">Desenvolvido por <a href="https://desenvolvimentodesites.dev.br/" target="_blank" rel="noopener">Alexis Marketing &amp; Dev</a></p>
+      <p class="footer__dev">
+        Desenvolvido por <a href="https://desenvolvimentodesites.dev.br/" target="_blank" rel="noopener">Alexis Marketing &amp; Dev</a>
+        <a href="#" onclick="acessarAdmin(event)" style="margin-left: 8px; color: inherit; opacity: 0.4;" title="Área Restrita">
+          <i data-lucide="shield" style="width:14px;height:14px;vertical-align:middle"></i>
+        </a>
+      </p>
     </div>
   </footer>
 
   <script src="app.js"></script>
-  <script>lucide.createIcons();</script>
+  <script>
+    lucide.createIcons();
+    function acessarAdmin(e) {
+      if (e) e.preventDefault();
+      var senha = prompt("Digite a senha do administrador:");
+      if (senha === "ocomeberio2019") {
+        sessionStorage.setItem("ocomebe_admin", "ocomeberio2019");
+        window.location.href = "admin.html";
+      } else if (senha !== null) {
+        alert("Senha incorreta!");
+      }
+    }
+  </script>
 </body>
 </html>

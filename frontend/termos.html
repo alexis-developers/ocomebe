@@ -129,10 +129,27 @@
           <a href="termos.html">Termos de Uso</a>
         </div>
       </div>
-      <p class="footer__dev">Desenvolvido por <a href="https://desenvolvimentodesites.dev.br/" target="_blank" rel="noopener">Alexis Marketing &amp; Dev</a></p>
+      <p class="footer__dev">
+        Desenvolvido por <a href="https://desenvolvimentodesites.dev.br/" target="_blank" rel="noopener">Alexis Marketing &amp; Dev</a>
+        <a href="#" onclick="acessarAdmin(event)" style="margin-left: 8px; color: inherit; opacity: 0.4;" title="Área Restrita">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield" style="vertical-align:middle"><path d="M20 13c0 5-3.5 7.5-7.66 9.7a1 1 0 0 1-.68 0C7.5 20.5 4 18 4 13V6a1 1 0 0 1 .76-.97l8-2a1 1 0 0 1 .48 0l8 2A1 1 0 0 1 20 6z"/></svg>
+        </a>
+      </p>
     </div>
   </footer>
 
   <script src="app.js"></script>
+  <script>
+    function acessarAdmin(e) {
+      if (e) e.preventDefault();
+      var senha = prompt("Digite a senha do administrador:");
+      if (senha === "ocomeberio2019") {
+        sessionStorage.setItem("ocomebe_admin", "ocomeberio2019");
+        window.location.href = "admin.html";
+      } else if (senha !== null) {
+        alert("Senha incorreta!");
+      }
+    }
+  </script>
 </body>
 </html>
