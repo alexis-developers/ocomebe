@@ -1,0 +1,9 @@
+{
+  "name": "ocomebe-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "npx serve . -p 3000",
+    "build": "echo 'Static site - no build needed'"
+  }
+}

@@ -1,0 +1,11 @@
+name = "ocomebe-api"
+main = "src/worker.js"
+compatibility_date = "2024-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "ocomebe-db"
+database_id = "94d38319-21ee-4687-bbb6-ce03ece12a7b"
+
+[vars]
+ENVIRONMENT = "production"
