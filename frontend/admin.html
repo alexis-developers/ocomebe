@@ -4,15 +4,32 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Administração - OCOMEBE</title>
-  <meta name="description" content="Painel de controle administrative da OCOMEBE">
+  <meta name="description" content="Painel de controle administrativo da OCOMEBE">
   <link rel="icon" type="image/png" href="logo-ocomebe.png">
-  <link rel="stylesheet" href="style.css?v=2.0.0">
+  <link rel="stylesheet" href="style.css?v=3.0.0">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <script>
     if (sessionStorage.getItem('ocomebe_admin') !== 'ocomeberio2019') {
       window.location.href = 'index.html';
     }
   </script>
+  <style>
+    .admin-tabs { display:flex; gap:0; border-bottom:2px solid var(--border); margin-bottom:24px; }
+    .admin-tab { padding:12px 24px; font-weight:600; font-size:0.95rem; color:var(--text-muted); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; transition:all 0.2s; background:none; border-top:none; border-left:none; border-right:none; font-family:var(--font-sans); }
+    .admin-tab:hover { color:var(--deep-navy); }
+    .admin-tab.active { color:var(--deep-navy); border-bottom-color:var(--gold); }
+    .tab-content { display:none; }
+    .tab-content.active { display:block; }
+    .upload-zone { border:2px dashed var(--border); border-radius:var(--radius-lg); padding:32px; text-align:center; cursor:pointer; transition:all 0.2s; background:#f8fafc; }
+    .upload-zone:hover { border-color:var(--gold); background:#fffbeb; }
+    .upload-zone.dragover { border-color:var(--gold); background:#fffbeb; }
+    .artigo-card { background:#fff; border:1px solid var(--border); border-radius:var(--radius-lg); padding:20px; margin-bottom:16px; transition:box-shadow 0.2s; }
+    .artigo-card:hover { box-shadow:var(--shadow-soft); }
+    .stat-card { background:#fff; border:1px solid var(--border); border-radius:var(--radius-lg); padding:24px; text-align:center; }
+    .stat-card__icon { width:48px; height:48px; border-radius:50%; background:rgba(254,195,11,0.12); display:flex; align-items:center; justify-content:center; margin:0 auto 12px; }
+    .stat-card__value { font-family:var(--font-serif); font-size:2rem; font-weight:700; color:var(--deep-navy); }
+    .stat-card__label { font-size:0.85rem; color:var(--text-muted); }
+  </style>
 </head>
 <body>
 
@@ -32,150 +49,174 @@
 
   <main class="admin-page" style="padding-top: 130px; padding-bottom: 80px; min-height: 80vh; background: #f8fafc;">
     <div class="container">
-      <div class="admin-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 30px; flex-wrap: wrap; gap:16px;">
+
+      <!-- HEADER -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:16px;">
         <div>
           <h1 style="font-size:2rem; color:var(--navy-dark); font-family:var(--font-serif)">Painel Administrativo</h1>
-          <p style="color:var(--text-muted)">Gerenciamento do Cadastro Geral de Ministros</p>
+          <p style="color:var(--text-muted)">Gerenciamento completo da OCOMEBE</p>
         </div>
-        <div style="display:flex; gap:12px;">
+        <button onclick="logoutAdmin()" class="btn btn--outline-navy">Sair</button>
+      </div>
+
+      <!-- STATS -->
+      <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:32px;">
+        <div class="stat-card">
+          <div class="stat-card__icon"><i data-lucide="users" style="width:24px;height:24px;color:var(--gold)"></i></div>
+          <div class="stat-card__value" id="statMinistros">0</div>
+          <div class="stat-card__label">Ministros</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card__icon"><i data-lucide="newspaper" style="width:24px;height:24px;color:var(--gold)"></i></div>
+          <div class="stat-card__value" id="statArtigos">0</div>
+          <div class="stat-card__label">Artigos</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card__icon"><i data-lucide="calendar" style="width:24px;height:24px;color:var(--gold)"></i></div>
+          <div class="stat-card__value" id="statEventos">0</div>
+          <div class="stat-card__label">Eventos</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card__icon"><i data-lucide="file-text" style="width:24px;height:24px;color:var(--gold)"></i></div>
+          <div class="stat-card__value" id="statEstatuto">—</div>
+          <div class="stat-card__label">Estatuto</div>
+        </div>
+      </div>
+
+      <!-- TABS -->
+      <div class="admin-tabs">
+        <button class="admin-tab active" onclick="mudarAba('ministros')"><i data-lucide="users" style="width:16px;height:16px;vertical-align:middle;margin-right:6px"></i> Ministros</button>
+        <button class="admin-tab" onclick="mudarAba('artigos')"><i data-lucide="newspaper" style="width:16px;height:16px;vertical-align:middle;margin-right:6px"></i> Artigos</button>
+        <button class="admin-tab" onclick="mudarAba('estatuto')"><i data-lucide="scroll-text" style="width:16px;height:16px;vertical-align:middle;margin-right:6px"></i> Estatuto</button>
+      </div>
+
+      <!-- === ABA MINISTROS === -->
+      <div id="aba-ministros" class="tab-content active">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
+          <input type="text" id="buscaInput" placeholder="Buscar por nome, CPF ou inscrição..." style="flex:1; min-width:250px; padding:10px 14px; border:1px solid var(--border); border-radius:var(--radius); font-size:0.95rem;" oninput="filtrarMinistros()">
           <button class="btn btn--gold" onclick="abrirModalCadastro()">+ Novo Ministro</button>
-          <button class="btn btn--outline-navy" onclick="logoutAdmin()">Sair</button>
+        </div>
+        <div style="background:#fff; border-radius:var(--radius); border:1px solid var(--border); overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse; text-align:left; font-size:0.9rem;">
+            <thead>
+              <tr style="background:var(--navy-dark); color:#fff;">
+                <th style="padding:14px 16px;">Foto</th>
+                <th style="padding:14px 16px;">Inscrição</th>
+                <th style="padding:14px 16px;">Nome</th>
+                <th style="padding:14px 16px;">CPF</th>
+                <th style="padding:14px 16px;">Função</th>
+                <th style="padding:14px 16px;">Validade</th>
+                <th style="padding:14px 16px;">Anuidade</th>
+                <th style="padding:14px 16px; text-align:center;">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="ministrosTbody">
+              <tr><td colspan="8" style="padding:40px; text-align:center; color:var(--text-muted);">Carregando...</td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
-      <!-- BUSCA -->
-      <div class="admin-search-box" style="background:#fff; padding:16px 20px; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 24px;">
-        <input 
-          type="text" 
-          id="buscaInput" 
-          placeholder="🔍 Buscar ministro por nome, CPF ou número de inscrição..." 
-          style="width:100%; padding:10px 14px; border:1px solid var(--border); border-radius:var(--radius); font-size:1rem;"
-          oninput="filtrarMinistros()"
-        >
+      <!-- === ABA ARTIGOS === -->
+      <div id="aba-artigos" class="tab-content">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
+          <input type="text" id="buscaArtigo" placeholder="Buscar artigo por título ou autor..." style="flex:1; min-width:250px; padding:10px 14px; border:1px solid var(--border); border-radius:var(--radius); font-size:0.95rem;" oninput="filtrarArtigos()">
+          <button class="btn btn--gold" onclick="abrirModalArtigo()">+ Novo Artigo</button>
+        </div>
+        <div id="artigosLista">
+          <p style="color:var(--text-muted); text-align:center; padding:40px;">Carregando artigos...</p>
+        </div>
       </div>
 
-      <!-- TABELA -->
-      <div class="admin-table-container" style="background:#fff; border-radius:var(--radius); border: 1px solid var(--border); overflow-x:auto;">
-        <table class="admin-table" style="width:100%; border-collapse:collapse; text-align:left; font-size:0.95rem;">
-          <thead>
-            <tr style="background:var(--navy-dark); color:#fff; border-bottom:2px solid var(--gold);">
-              <th style="padding:16px 20px;">Foto</th>
-              <th style="padding:16px 20px;">Inscrição</th>
-              <th style="padding:16px 20px;">Nome</th>
-              <th style="padding:16px 20px;">CPF</th>
-              <th style="padding:16px 20px;">Função / Ministério</th>
-              <th style="padding:16px 20px;">Validade</th>
-              <th style="padding:16px 20px;">Anuidade</th>
-              <th style="padding:16px 20px; text-align:center;">Ações</th>
-            </tr>
-          </thead>
-          <tbody id="ministrosTbody">
-            <tr>
-              <td colspan="8" style="padding:40px; text-align:center; color:var(--text-muted);">Carregando dados dos ministros...</td>
-            </tr>
-          </tbody>
-        </table>
+      <!-- === ABA ESTATUTO === -->
+      <div id="aba-estatuto" class="tab-content">
+        <div style="background:#fff; border:1px solid var(--border); border-radius:var(--radius-lg); padding:32px; max-width:700px;">
+          <h3 style="font-family:var(--font-serif); font-size:1.3rem; color:var(--deep-navy); margin-bottom:8px;">Estatuto OCOMEBE</h3>
+          <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:24px;">Faça upload do documento oficial do estatuto em PDF. O arquivo será acessível na página "Recursos de Apoio".</p>
+
+          <div id="estatutoAtual" style="margin-bottom:20px;"></div>
+
+          <div class="upload-zone" id="estatutoUploadZone" onclick="document.getElementById('estatutoFile').click()">
+            <i data-lucide="upload-cloud" style="width:40px;height:40px;color:var(--gold);margin-bottom:8px"></i>
+            <p style="font-weight:600; color:var(--deep-navy); margin-bottom:4px;">Clique ou arraste um arquivo PDF</p>
+            <p style="font-size:0.8rem; color:var(--text-muted);">Máximo 2MB. Formato PDF.</p>
+            <input type="file" id="estatutoFile" accept=".pdf" style="display:none" onchange="previewEstatuto(this)">
+          </div>
+
+          <div id="estatutoPreview" style="display:none; margin-top:16px; padding:16px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:var(--radius); display:none;">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <i data-lucide="file-check" style="width:24px;height:24px;color:#16a34a"></i>
+              <div>
+                <p id="estatutoNome" style="font-weight:600; color:#166534;"></p>
+                <p id="estatutoTamanho" style="font-size:0.8rem; color:#15803d;"></p>
+              </div>
+            </div>
+          </div>
+
+          <button class="btn btn--gold" id="salvarEstatutoBtn" style="margin-top:20px; display:none;" onclick="salvarEstatuto()">Salvar Estatuto</button>
+        </div>
       </div>
+
     </div>
   </main>
 
-  <!-- MODAL DE CADASTRO/EDIÇÃO -->
+  <!-- MODAL MINISTRO -->
   <div id="cadastroModal" class="modal-overlay" style="display:none">
-    <div class="modal" style="max-width: 800px;">
+    <div class="modal" style="max-width:800px;">
       <button class="modal__close" onclick="fecharModalCadastro()">&times;</button>
-      
-      <h2 id="modalTitulo" style="font-size:1.6rem; color:var(--navy-dark); margin-bottom:24px; font-family:var(--font-serif)">Cadastrar Novo Ministro</h2>
-      
-      <form id="cadastroForm" onsubmit="salvarMinistro(event)" class="acesso-form" style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+      <h2 id="modalTitulo" style="font-size:1.5rem; color:var(--navy-dark); margin-bottom:20px; font-family:var(--font-serif)">Cadastrar Ministro</h2>
+      <form id="cadastroForm" onsubmit="salvarMinistro(event)" style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
         <input type="hidden" id="ministroId">
-        
-        <div class="acesso-form__field" style="grid-column: span 2; margin-bottom:12px;">
-          <label for="nome" style="margin-bottom:4px; font-size:0.85rem">Nome Completo *</label>
-          <input type="text" id="nome" required class="acesso-form__input" style="padding:10px 12px; font-size:1rem" placeholder="Ex: Pr. João da Silva">
-        </div>
-
-        <div class="acesso-form__field" style="margin-bottom:12px;">
-          <label for="cpf" style="margin-bottom:4px; font-size:0.85rem">CPF *</label>
-          <input type="text" id="cpf" required maxlength="14" class="acesso-form__input" style="padding:10px 12px; font-size:1rem" placeholder="000.000.000-00">
-        </div>
-
-        <div class="acesso-form__field" style="margin-bottom:12px;">
-          <label for="identidade" style="margin-bottom:4px; font-size:0.85rem">RG / Identidade</label>
-          <input type="text" id="identidade" class="acesso-form__input" style="padding:10px 12px; font-size:1rem" placeholder="Ex: 1234567-8 SSP">
-        </div>
-
-        <div class="acesso-form__field" style="margin-bottom:12px;">
-          <label for="dataNascimento" style="margin-bottom:4px; font-size:0.85rem">Data de Nascimento</label>
-          <input type="date" id="dataNascimento" class="acesso-form__input" style="padding:10px 12px; font-size:1rem">
-        </div>
-
-        <div class="acesso-form__field" style="margin-bottom:12px;">
-          <label for="naturalidade" style="margin-bottom:4px; font-size:0.85rem">Naturalidade (Cidade/UF)</label>
-          <input type="text" id="naturalidade" class="acesso-form__input" style="padding:10px 12px; font-size:1rem" placeholder="Ex: Rio de Janeiro/RJ">
-        </div>
-
-        <div class="acesso-form__field" style="margin-bottom:12px;">
-          <label for="funcao" style="margin-bottom:4px; font-size:0.85rem">Função / Cargo *</label>
-          <input type="text" id="funcao" required class="acesso-form__input" style="padding:10px 12px; font-size:1rem" placeholder="Ex: Pastor Presidente, Ministro, Missionária">
-        </div>
-
-        <div class="acesso-form__field" style="margin-bottom:12px;">
-          <label for="ministerio" style="margin-bottom:4px; font-size:0.85rem">Ministério / Igreja</label>
-          <input type="text" id="ministerio" class="acesso-form__input" style="padding:10px 12px; font-size:1rem" placeholder="Ex: Assembleia de Deus">
-        </div>
-
-        <div class="acesso-form__field" style="margin-bottom:12px;">
-          <label for="numeroInscricao" style="margin-bottom:4px; font-size:0.85rem">Número de Inscrição *</label>
-          <input type="text" id="numeroInscricao" required class="acesso-form__input" style="padding:10px 12px; font-size:1rem" placeholder="Ex: OCOMEBE-999">
-        </div>
-
-        <div class="acesso-form__field" style="margin-bottom:12px;">
-          <label for="validadeCarteirinha" style="margin-bottom:4px; font-size:0.85rem">Validade da Carteirinha</label>
-          <input type="date" id="validadeCarteirinha" class="acesso-form__input" style="padding:10px 12px; font-size:1rem">
-        </div>
-
-        <div class="acesso-form__field" style="margin-bottom:12px;">
-          <label for="statusAnuidade" style="margin-bottom:4px; font-size:0.85rem">Status da Anuidade *</label>
-          <select id="statusAnuidade" required class="acesso-form__input" style="padding:10px 12px; font-size:1rem; height:45px">
-            <option value="em_dia">PAGO (Em Dia)</option>
-            <option value="pendente">PENDENTE</option>
-            <option value="vencida">INADIMPLENTE (Vencido)</option>
-            <option value="cancelada">CANCELADA</option>
-          </select>
-        </div>
-
-        <div class="acesso-form__field" style="margin-bottom:12px;">
-          <label for="anuidadePagaAte" style="margin-bottom:4px; font-size:0.85rem">Pago Até</label>
-          <input type="date" id="anuidadePagaAte" class="acesso-form__input" style="padding:10px 12px; font-size:1rem">
-        </div>
-
-        <div class="acesso-form__field" style="margin-bottom:12px;">
-          <label for="telefone" style="margin-bottom:4px; font-size:0.85rem">Telefone</label>
-          <input type="text" id="telefone" class="acesso-form__input" style="padding:10px 12px; font-size:1rem" placeholder="(00) 00000-0000">
-        </div>
-
-        <div class="acesso-form__field" style="margin-bottom:12px;">
-          <label for="email" style="margin-bottom:4px; font-size:0.85rem">E-mail</label>
-          <input type="email" id="email" class="acesso-form__input" style="padding:10px 12px; font-size:1rem" placeholder="pastor@email.com">
-        </div>
-
-        <div class="acesso-form__field" style="grid-column: span 2; margin-bottom:16px;">
-          <label style="margin-bottom:4px; font-size:0.85rem">Foto do Ministro</label>
-          <div style="display:flex; gap:16px; align-items:flex-start;">
-            <div style="flex:1;">
-              <input type="file" id="fotoFile" accept="image/*" onchange="previewFoto(this)" style="width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:var(--radius); font-size:0.9rem; background:#fff;">
-              <p style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">JPG, PNG ou WebP. Máx. 500KB.</p>
-            </div>
-            <div id="fotoPreview" style="width:80px; height:100px; border:2px dashed var(--border); border-radius:6px; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0; background:#f1f5f9;">
-              <span style="font-size:0.7rem; color:var(--text-muted); text-align:center;">Preview</span>
-            </div>
+        <div style="grid-column:span 2;"><label style="font-size:0.85rem; font-weight:600;">Nome Completo *</label><input type="text" id="nome" required class="acesso-form__input" style="padding:10px 12px;"></div>
+        <div><label style="font-size:0.85rem; font-weight:600;">CPF *</label><input type="text" id="cpf" required maxlength="14" class="acesso-form__input" style="padding:10px 12px;" placeholder="000.000.000-00"></div>
+        <div><label style="font-size:0.85rem; font-weight:600;">RG</label><input type="text" id="identidade" class="acesso-form__input" style="padding:10px 12px;"></div>
+        <div><label style="font-size:0.85rem; font-weight:600;">Data Nascimento</label><input type="date" id="dataNascimento" class="acesso-form__input" style="padding:10px 12px;"></div>
+        <div><label style="font-size:0.85rem; font-weight:600;">Naturalidade</label><input type="text" id="naturalidade" class="acesso-form__input" style="padding:10px 12px;"></div>
+        <div><label style="font-size:0.85rem; font-weight:600;">Função *</label><input type="text" id="funcao" required class="acesso-form__input" style="padding:10px 12px;"></div>
+        <div><label style="font-size:0.85rem; font-weight:600;">Ministério</label><input type="text" id="ministerio" class="acesso-form__input" style="padding:10px 12px;"></div>
+        <div><label style="font-size:0.85rem; font-weight:600;">Inscrição *</label><input type="text" id="numeroInscricao" required class="acesso-form__input" style="padding:10px 12px;"></div>
+        <div><label style="font-size:0.85rem; font-weight:600;">Validade Carteirinha</label><input type="date" id="validadeCarteirinha" class="acesso-form__input" style="padding:10px 12px;"></div>
+        <div><label style="font-size:0.85rem; font-weight:600;">Status Anuidade *</label><select id="statusAnuidade" required class="acesso-form__input" style="padding:10px 12px; height:42px;"><option value="em_dia">PAGO</option><option value="pendente">PENDENTE</option><option value="vencida">INADIMPLENTE</option><option value="cancelada">CANCELADA</option></select></div>
+        <div><label style="font-size:0.85rem; font-weight:600;">Pago Até</label><input type="date" id="anuidadePagaAte" class="acesso-form__input" style="padding:10px 12px;"></div>
+        <div><label style="font-size:0.85rem; font-weight:600;">Telefone</label><input type="text" id="telefone" class="acesso-form__input" style="padding:10px 12px;"></div>
+        <div><label style="font-size:0.85rem; font-weight:600;">E-mail</label><input type="email" id="email" class="acesso-form__input" style="padding:10px 12px;"></div>
+        <div style="grid-column:span 2;">
+          <label style="font-size:0.85rem; font-weight:600;">Foto do Ministro</label>
+          <div style="display:flex; gap:16px; align-items:flex-start; margin-top:4px;">
+            <div style="flex:1;"><input type="file" id="fotoFile" accept="image/*" onchange="previewFoto(this)" style="width:100%; padding:8px; border:1px solid var(--border); border-radius:var(--radius); font-size:0.85rem;"><p style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">JPG/PNG/WebP. Máx. 500KB.</p></div>
+            <div id="fotoPreview" style="width:70px; height:90px; border:2px dashed var(--border); border-radius:6px; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0; background:#f1f5f9;"><span style="font-size:0.65rem; color:var(--text-muted);">Preview</span></div>
           </div>
           <input type="hidden" id="fotoUrl">
         </div>
-
-        <div style="grid-column: span 2; display:flex; justify-content:flex-end; gap:12px; margin-top:10px;">
+        <div style="grid-column:span 2; display:flex; justify-content:flex-end; gap:12px; margin-top:8px;">
           <button type="button" class="btn btn--outline-navy" onclick="fecharModalCadastro()">Cancelar</button>
-          <button type="submit" class="btn btn--gold" id="salvarBtn">Salvar Dados</button>
+          <button type="submit" class="btn btn--gold" id="salvarBtn">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL ARTIGO -->
+  <div id="artigoModal" class="modal-overlay" style="display:none">
+    <div class="modal" style="max-width:700px;">
+      <button class="modal__close" onclick="fecharModalArtigo()">&times;</button>
+      <h2 id="artigoModalTitulo" style="font-size:1.5rem; color:var(--navy-dark); margin-bottom:20px; font-family:var(--font-serif)">Novo Artigo</h2>
+      <form id="artigoForm" onsubmit="salvarArtigo(event)" style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+        <input type="hidden" id="artigoId">
+        <div style="grid-column:span 2;"><label style="font-size:0.85rem; font-weight:600;">Título *</label><input type="text" id="artigoTitulo" required class="acesso-form__input" style="padding:10px 12px;"></div>
+        <div style="grid-column:span 2;"><label style="font-size:0.85rem; font-weight:600;">Subtítulo</label><input type="text" id="artigoSubtitulo" class="acesso-form__input" style="padding:10px 12px;"></div>
+        <div><label style="font-size:0.85rem; font-weight:600;">Autor *</label><input type="text" id="artigoAutor" required class="acesso-form__input" style="padding:10px 12px;"></div>
+        <div><label style="font-size:0.85rem; font-weight:600;">Data Publicação</label><input type="date" id="artigoData" class="acesso-form__input" style="padding:10px 12px;"></div>
+        <div style="grid-column:span 2;">
+          <label style="font-size:0.85rem; font-weight:600;">Imagem de Capa</label>
+          <input type="file" id="artigoImagemFile" accept="image/*" onchange="previewArtigoImagem(this)" style="width:100%; padding:8px; border:1px solid var(--border); border-radius:var(--radius); font-size:0.85rem; margin-top:4px;">
+          <div id="artigoImagemPreview" style="margin-top:8px;"></div>
+          <input type="hidden" id="artigoImagemUrl">
+        </div>
+        <div style="grid-column:span 2;"><label style="font-size:0.85rem; font-weight:600;">Conteúdo *</label><textarea id="artigoConteudo" required rows="8" class="acesso-form__input" style="padding:10px 12px; resize:vertical; font-family:var(--font-sans);"></textarea></div>
+        <div style="grid-column:span 2; display:flex; justify-content:flex-end; gap:12px; margin-top:8px;">
+          <button type="button" class="btn btn--outline-navy" onclick="fecharModalArtigo()">Cancelar</button>
+          <button type="submit" class="btn btn--gold" id="salvarArtigoBtn">Publicar</button>
         </div>
       </form>
     </div>
@@ -193,299 +234,344 @@
   <script>
     const API_URL = 'https://ocomebe-api.dev-teste.workers.dev';
     let todosMinistros = [];
+    let todosArtigos = [];
+    let estatutoAtual = null;
 
-    // Carregar ministros ao iniciar
     document.addEventListener('DOMContentLoaded', () => {
       carregarMinistros();
-      
-      // Aplicar máscara de CPF no input
+      carregarArtigos();
+      carregarEstatuto();
+      carregarStats();
+
       document.getElementById('cpf').addEventListener('input', function(e) {
-        let value = e.target.value.replace(/\D/g, '');
-        if (value.length <= 11) {
-          value = value
-            .replace(/(\d{3})(\d)/, '$1.$2')
-            .replace(/(\d{3})(\d)/, '$1.$2')
-            .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-        }
-        e.target.value = value;
+        let v = e.target.value.replace(/\D/g, '');
+        if (v.length <= 11) v = v.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+        e.target.value = v;
       });
+
+      const zone = document.getElementById('estatutoUploadZone');
+      zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+      zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+      zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('dragover'); if (e.dataTransfer.files.length) { document.getElementById('estatutoFile').files = e.dataTransfer.files; previewEstatuto(document.getElementById('estatutoFile')); }});
     });
 
+    // === TABS ===
+    function mudarAba(aba) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.admin-tab').forEach(el => el.classList.remove('active'));
+      document.getElementById('aba-' + aba).classList.add('active');
+      event.currentTarget.classList.add('active');
+    }
+
+    // === STATS ===
+    async function carregarStats() {
+      try {
+        const [m, n, e] = await Promise.all([
+          fetch(API_URL + '/api/CadastroGeral').then(r => r.ok ? r.json() : []),
+          fetch(API_URL + '/api/Noticia').then(r => r.ok ? r.json() : []),
+          fetch(API_URL + '/api/Evento').then(r => r.ok ? r.json() : [])
+        ]);
+        document.getElementById('statMinistros').textContent = Array.isArray(m) ? m.length : 0;
+        document.getElementById('statArtigos').textContent = Array.isArray(n) ? n.length : 0;
+        document.getElementById('statEventos').textContent = Array.isArray(e) ? e.length : 0;
+      } catch(e) {}
+    }
+
+    // === MINISTROS ===
     async function carregarMinistros() {
       const tbody = document.getElementById('ministrosTbody');
-      tbody.innerHTML = `<tr><td colspan="8" style="padding:40px; text-align:center; color:var(--text-muted);">Carregando dados dos ministros...</td></tr>`;
-
+      tbody.innerHTML = '<tr><td colspan="8" style="padding:40px;text-align:center;color:var(--text-muted);">Carregando...</td></tr>';
       try {
-        const response = await fetch(`${API_URL}/api/CadastroGeral`);
-        if (!response.ok) throw new Error('Erro ao carregar banco de dados');
-        
-        todosMinistros = await response.json();
-        
-        // Ordenar por nome por padrão
+        const r = await fetch(API_URL + '/api/CadastroGeral');
+        if (!r.ok) throw new Error('Erro ao carregar');
+        todosMinistros = await r.json();
         todosMinistros.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
-        
-        renderizarTabela(todosMinistros);
-      } catch (error) {
-        tbody.innerHTML = `<tr><td colspan="8" style="padding:40px; text-align:center; color:#dc2626; font-weight:600;">⚠️ ${error.message}. Verifique a conexão com o Worker.</td></tr>`;
+        renderizarMinistros(todosMinistros);
+      } catch(e) {
+        tbody.innerHTML = '<tr><td colspan="8" style="padding:40px;text-align:center;color:#dc2626;">' + e.message + '</td></tr>';
       }
     }
 
-    function renderizarTabela(ministros) {
+    function renderizarMinistros(list) {
       const tbody = document.getElementById('ministrosTbody');
-      
-      if (ministros.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" style="padding:40px; text-align:center; color:var(--text-muted);">Nenhum ministro cadastrado ou encontrado.</td></tr>`;
-        return;
-      }
-
-      const statusMap = {
-        'em_dia': { label: 'PAGO', color: '#16a34a', bg: '#f0fdf4' },
-        'pendente': { label: 'PENDENTE', color: '#d97706', bg: '#fffbeb' },
-        'vencida': { label: 'INADIMPLENTE', color: '#dc2626', bg: '#fef2f2' },
-        'cancelada': { label: 'CANCELADA', color: '#4b5563', bg: '#f3f4f6' }
-      };
-
-      tbody.innerHTML = ministros.map(m => {
-        const status = statusMap[m.statusAnuidade] || statusMap['pendente'];
-        const validade = m.validadeCarteirinha ? formatarDataISO(m.validadeCarteirinha) : 'Não definida';
-        
-        return `
-          <tr style="border-bottom:1px solid var(--border); transition: background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='none'">
-            <td style="padding:14px 20px;">
-              ${m.fotoUrl ? `<img src="${m.fotoUrl}" alt="${m.nome}" style="width:40px;height:50px;object-fit:cover;border-radius:4px;border:1px solid var(--border);">` : `<div style="width:40px;height:50px;background:#f1f5f9;border-radius:4px;border:1px dashed var(--border);display:flex;align-items:center;justify-content:center;"><i data-lucide="user" style="width:18px;height:18px;color:#94a3b8"></i></div>`}
-            </td>
-            <td style="padding:14px 20px; font-weight:700; color:var(--navy-dark);">${m.numeroInscricao || '-'}</td>
-            <td style="padding:14px 20px; font-weight:600; color:#334155;">${m.nome || '-'}</td>
-            <td style="padding:14px 20px; font-family:monospace; color:#475569;">${formatarCPF(m.cpf)}</td>
-            <td style="padding:14px 20px; color:#475569;">
-              <div style="font-weight:600; color:#334155;">${m.funcao || 'Ministro'}</div>
-              <div style="font-size:0.8rem; color:var(--text-muted);">${m.ministerio || '-'}</div>
-            </td>
-            <td style="padding:14px 20px; color:#475569;">${validade}</td>
-            <td style="padding:14px 20px;">
-              <span style="display:inline-block; padding:4px 10px; border-radius:9999px; font-size:0.75rem; font-weight:700; color:${status.color}; background:${status.bg}; border:1px solid ${status.color}33;">
-                ${status.label}
-              </span>
-            </td>
-            <td style="padding:14px 20px; text-align:center;">
-              <div style="display:flex; gap:8px; justify-content:center;">
-                <button onclick="abrirModalEdicao('${m.id}')" class="btn btn--outline-navy btn--sm" style="padding:4px 10px; font-size:0.8rem;">Editar</button>
-                <button onclick="excluirMinistro('${m.id}')" class="btn btn--outline-red btn--sm" style="padding:4px 10px; font-size:0.8rem; border-color:#dc2626; color:#dc2626;">Excluir</button>
-              </div>
-            </td>
-          </tr>
-        `;
+      if (!list.length) { tbody.innerHTML = '<tr><td colspan="8" style="padding:40px;text-align:center;color:var(--text-muted);">Nenhum ministro encontrado.</td></tr>'; return; }
+      const st = { em_dia:{l:'PAGO',c:'#16a34a',bg:'#f0fdf4'}, pendente:{l:'PENDENTE',c:'#d97706',bg:'#fffbeb'}, vencida:{l:'INADIMPLENTE',c:'#dc2626',bg:'#fef2f2'}, cancelada:{l:'CANCELADA',c:'#4b5563',bg:'#f3f4f6'} };
+      tbody.innerHTML = list.map(m => {
+        const s = st[m.statusAnuidade] || st.pendente;
+        const v = m.validadeCarteirinha ? fmtData(m.validadeCarteirinha) : '—';
+        const foto = m.fotoUrl ? `<img src="${m.fotoUrl}" style="width:36px;height:44px;object-fit:cover;border-radius:4px;border:1px solid var(--border);">` : `<div style="width:36px;height:44px;background:#f1f5f9;border-radius:4px;border:1px dashed var(--border);display:flex;align-items:center;justify-content:center;"><i data-lucide="user" style="width:16px;height:16px;color:#94a3b8"></i></div>`;
+        return `<tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:12px 16px;">${foto}</td>
+          <td style="padding:12px 16px;font-weight:700;color:var(--navy-dark);">${m.numeroInscricao||'-'}</td>
+          <td style="padding:12px 16px;font-weight:600;">${m.nome||'-'}</td>
+          <td style="padding:12px 16px;font-family:monospace;">${fmtCPF(m.cpf)}</td>
+          <td style="padding:12px 16px;"><div style="font-weight:600;">${m.funcao||'-'}</div><div style="font-size:0.75rem;color:var(--text-muted);">${m.ministerio||''}</div></td>
+          <td style="padding:12px 16px;">${v}</td>
+          <td style="padding:12px 16px;"><span style="padding:3px 8px;border-radius:9999px;font-size:0.7rem;font-weight:700;color:${s.c};background:${s.bg};border:1px solid ${s.c}33;">${s.l}</span></td>
+          <td style="padding:12px 16px;text-align:center;">
+            <button onclick="abrirModalEdicao('${m.id}')" style="padding:4px 10px;font-size:0.8rem;border:1px solid var(--border);border-radius:var(--radius);background:#fff;cursor:pointer;margin-right:4px;">Editar</button>
+            <button onclick="excluirMinistro('${m.id}')" style="padding:4px 10px;font-size:0.8rem;border:1px solid #fecaca;border-radius:var(--radius);background:#fef2f2;color:#dc2626;cursor:pointer;">Excluir</button>
+          </td>
+        </tr>`;
       }).join('');
       lucide.createIcons();
     }
 
     function filtrarMinistros() {
-      const termo = document.getElementById('buscaInput').value.toLowerCase().trim();
-      if (!termo) {
-        renderizarTabela(todosMinistros);
-        return;
-      }
-      
-      const filtrados = todosMinistros.filter(m => 
-        (m.nome || '').toLowerCase().includes(termo) ||
-        (m.cpf || '').replace(/\D/g, '').includes(termo.replace(/\D/g, '')) ||
-        (m.numeroInscricao || '').toLowerCase().includes(termo) ||
-        (m.funcao || '').toLowerCase().includes(termo) ||
-        (m.ministerio || '').toLowerCase().includes(termo)
-      );
-      
-      renderizarTabela(filtrados);
+      const t = document.getElementById('buscaInput').value.toLowerCase().trim();
+      if (!t) { renderizarMinistros(todosMinistros); return; }
+      renderizarMinistros(todosMinistros.filter(m => (m.nome||'').toLowerCase().includes(t) || (m.cpf||'').replace(/\D/g,'').includes(t.replace(/\D/g,'')) || (m.numeroInscricao||'').toLowerCase().includes(t)));
     }
 
     function abrirModalCadastro() {
-      document.getElementById('modalTitulo').textContent = 'Cadastrar Novo Ministro';
+      document.getElementById('modalTitulo').textContent = 'Cadastrar Ministro';
       document.getElementById('cadastroForm').reset();
       document.getElementById('ministroId').value = '';
-      document.getElementById('fotoPreview').innerHTML = `<span style="font-size:0.7rem; color:var(--text-muted); text-align:center;">Preview</span>`;
+      document.getElementById('fotoPreview').innerHTML = '<span style="font-size:0.65rem;color:var(--text-muted);">Preview</span>';
       document.getElementById('fotoFile').value = '';
       document.getElementById('cadastroModal').style.display = 'flex';
     }
 
     function abrirModalEdicao(id) {
-      const ministro = todosMinistros.find(m => m.id === id);
-      if (!ministro) return;
-
+      const m = todosMinistros.find(x => x.id === id);
+      if (!m) return;
       document.getElementById('modalTitulo').textContent = 'Editar Ministro';
-      document.getElementById('ministroId').value = ministro.id;
-      document.getElementById('nome').value = ministro.nome || '';
-      document.getElementById('cpf').value = formatarCPF(ministro.cpf) || '';
-      document.getElementById('identidade').value = ministro.identidade || '';
-      document.getElementById('dataNascimento').value = filtrarDataCampo(ministro.dataNascimento) || '';
-      document.getElementById('naturalidade').value = ministro.naturalidade || '';
-      document.getElementById('funcao').value = ministro.funcao || '';
-      document.getElementById('ministerio').value = ministro.ministerio || '';
-      document.getElementById('numeroInscricao').value = ministro.numeroInscricao || '';
-      document.getElementById('validadeCarteirinha').value = filtrarDataCampo(ministro.validadeCarteirinha) || '';
-      document.getElementById('statusAnuidade').value = ministro.statusAnuidade || 'pendente';
-      document.getElementById('anuidadePagaAte').value = filtrarDataCampo(ministro.anuidadePagaAte) || '';
-      document.getElementById('telefone').value = ministro.telefone || '';
-      document.getElementById('email').value = ministro.email || '';
-      document.getElementById('fotoUrl').value = ministro.fotoUrl || '';
-
-      const preview = document.getElementById('fotoPreview');
-      if (ministro.fotoUrl) {
-        preview.innerHTML = `<img src="${ministro.fotoUrl}" style="width:100%;height:100%;object-fit:cover;" alt="Foto atual">`;
-      } else {
-        preview.innerHTML = `<span style="font-size:0.7rem; color:var(--text-muted); text-align:center;">Preview</span>`;
-      }
+      document.getElementById('ministroId').value = m.id;
+      document.getElementById('nome').value = m.nome||'';
+      document.getElementById('cpf').value = fmtCPF(m.cpf);
+      document.getElementById('identidade').value = m.identidade||'';
+      document.getElementById('dataNascimento').value = m.dataNascimento||'';
+      document.getElementById('naturalidade').value = m.naturalidade||'';
+      document.getElementById('funcao').value = m.funcao||'';
+      document.getElementById('ministerio').value = m.ministerio||'';
+      document.getElementById('numeroInscricao').value = m.numeroInscricao||'';
+      document.getElementById('validadeCarteirinha').value = m.validadeCarteirinha||'';
+      document.getElementById('statusAnuidade').value = m.statusAnuidade||'pendente';
+      document.getElementById('anuidadePagaAte').value = m.anuidadePagaAte||'';
+      document.getElementById('telefone').value = m.telefone||'';
+      document.getElementById('email').value = m.email||'';
+      document.getElementById('fotoUrl').value = m.fotoUrl||'';
+      const p = document.getElementById('fotoPreview');
+      if (m.fotoUrl) { p.innerHTML = `<img src="${m.fotoUrl}" style="width:100%;height:100%;object-fit:cover;">`; } else { p.innerHTML = '<span style="font-size:0.65rem;color:var(--text-muted);">Preview</span>'; }
       document.getElementById('fotoFile').value = '';
-
       document.getElementById('cadastroModal').style.display = 'flex';
     }
 
-    function fecharModalCadastro() {
-      document.getElementById('cadastroModal').style.display = 'none';
-    }
+    function fecharModalCadastro() { document.getElementById('cadastroModal').style.display = 'none'; }
 
     async function salvarMinistro(e) {
       e.preventDefault();
       const id = document.getElementById('ministroId').value;
-      const salvarBtn = document.getElementById('salvarBtn');
-      salvarBtn.disabled = true;
-      salvarBtn.textContent = 'Gravando...';
-
-      const cpfLimpo = document.getElementById('cpf').value.replace(/\D/g, '');
-
-      let fotoBase64 = document.getElementById('fotoUrl').value;
-      const fileInput = document.getElementById('fotoFile');
-      if (fileInput.files && fileInput.files[0]) {
-        fotoBase64 = await fotoParaBase64(fileInput.files[0]);
-      }
-
-      const dados = {
-        nome: document.getElementById('nome').value,
-        cpf: cpfLimpo,
-        identidade: document.getElementById('identidade').value,
-        dataNascimento: document.getElementById('dataNascimento').value,
-        naturalidade: document.getElementById('naturalidade').value,
-        funcao: document.getElementById('funcao').value,
-        ministerio: document.getElementById('ministerio').value,
-        numeroInscricao: document.getElementById('numeroInscricao').value,
-        validadeCarteirinha: document.getElementById('validadeCarteirinha').value,
-        statusAnuidade: document.getElementById('statusAnuidade').value,
-        anuidadePagaAte: document.getElementById('anuidadePagaAte').value,
-        telefone: document.getElementById('telefone').value,
-        email: document.getElementById('email').value,
-        fotoUrl: fotoBase64
-      };
-
+      const btn = document.getElementById('salvarBtn');
+      btn.disabled = true; btn.textContent = 'Gravando...';
+      let foto = document.getElementById('fotoUrl').value;
+      const fi = document.getElementById('fotoFile');
+      if (fi.files && fi.files[0]) foto = await toBase64(fi.files[0]);
+      const d = { nome:document.getElementById('nome').value, cpf:document.getElementById('cpf').value.replace(/\D/g,''), identidade:document.getElementById('identidade').value, dataNascimento:document.getElementById('dataNascimento').value, naturalidade:document.getElementById('naturalidade').value, funcao:document.getElementById('funcao').value, ministerio:document.getElementById('ministerio').value, numeroInscricao:document.getElementById('numeroInscricao').value, validadeCarteirinha:document.getElementById('validadeCarteirinha').value, statusAnuidade:document.getElementById('statusAnuidade').value, anuidadePagaAte:document.getElementById('anuidadePagaAte').value, telefone:document.getElementById('telefone').value, email:document.getElementById('email').value, fotoUrl:foto };
       try {
-        let response;
-        if (id) {
-          // Edição
-          response = await fetch(`${API_URL}/api/CadastroGeral/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(dados)
-          });
-        } else {
-          // Cadastro
-          response = await fetch(`${API_URL}/api/CadastroGeral`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(dados)
-          });
-        }
-
-        if (!response.ok) throw new Error('Falha ao salvar dados na API.');
-
+        const url = id ? `${API_URL}/api/CadastroGeral/${id}` : `${API_URL}/api/CadastroGeral`;
+        const r = await fetch(url, { method: id?'PUT':'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(d) });
+        if (!r.ok) throw new Error('Falha ao salvar');
         fecharModalCadastro();
         await carregarMinistros();
-        alert('Cadastro ministerial salvo com sucesso!');
-      } catch (error) {
-        alert(`Erro ao salvar: ${error.message}`);
-      } finally {
-        salvarBtn.disabled = false;
-        salvarBtn.textContent = 'Salvar Dados';
-      }
+        await carregarStats();
+        alert('Salvo com sucesso!');
+      } catch(e) { alert('Erro: ' + e.message); }
+      finally { btn.disabled = false; btn.textContent = 'Salvar'; }
     }
 
     async function excluirMinistro(id) {
-      const ministro = todosMinistros.find(m => m.id === id);
-      if (!ministro) return;
-
-      if (!confirm(`Tem certeza que deseja EXCLUIR permanentemente o cadastro de ${ministro.nome}?`)) {
-        return;
-      }
-
+      const m = todosMinistros.find(x => x.id === id);
+      if (!m || !confirm('Excluir ' + m.nome + '?')) return;
       try {
-        const response = await fetch(`${API_URL}/api/CadastroGeral/${id}`, {
-          method: 'DELETE'
-        });
-
-        if (!response.ok) throw new Error('Falha ao excluir registro na API.');
-
+        const r = await fetch(`${API_URL}/api/CadastroGeral/${id}`, { method:'DELETE' });
+        if (!r.ok) throw new Error('Falha ao excluir');
         await carregarMinistros();
-        alert('Ministro excluído com sucesso.');
-      } catch (error) {
-        alert(`Erro ao excluir: ${error.message}`);
-      }
-    }
-
-    function logoutAdmin() {
-      sessionStorage.removeItem('ocomebe_admin');
-      window.location.href = 'index.html';
-    }
-
-    function formatarCPF(cpf) {
-      if (!cpf) return '';
-      const numeros = cpf.replace(/\D/g, '');
-      if (numeros.length !== 11) return cpf;
-      return numeros.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-    }
-
-    function formatarDataISO(dataStr) {
-      if (!dataStr) return '';
-      try {
-        const d = new Date(dataStr);
-        if (isNaN(d.getTime())) return dataStr;
-        // Ajustar fuso
-        const dateObj = new Date(d.getTime() + d.getTimezoneOffset() * 60000);
-        return dateObj.toLocaleDateString('pt-BR');
-      } catch (e) {
-        return dataStr;
-      }
-    }
-
-    function filtrarDataCampo(dataStr) {
-      if (!dataStr) return '';
-      if (dataStr.includes('T')) {
-        return dataStr.split('T')[0];
-      }
-      return dataStr;
+        await carregarStats();
+        alert('Excluído.');
+      } catch(e) { alert('Erro: ' + e.message); }
     }
 
     function previewFoto(input) {
-      const preview = document.getElementById('fotoPreview');
+      const p = document.getElementById('fotoPreview');
       if (input.files && input.files[0]) {
-        const file = input.files[0];
-        if (file.size > 500 * 1024) {
-          alert('Arquivo muito grande. Máximo 500KB.');
-          input.value = '';
-          return;
-        }
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          preview.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;" alt="Preview">`;
-          document.getElementById('fotoUrl').value = e.target.result;
-        };
-        reader.readAsDataURL(file);
+        if (input.files[0].size > 500*1024) { alert('Máximo 500KB.'); input.value=''; return; }
+        const r = new FileReader();
+        r.onload = e => { p.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;">`; document.getElementById('fotoUrl').value = e.target.result; };
+        r.readAsDataURL(input.files[0]);
       }
     }
 
-    function fotoParaBase64(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
+    // === ARTIGOS ===
+    async function carregarArtigos() {
+      try {
+        const r = await fetch(API_URL + '/api/Noticia');
+        if (!r.ok) throw new Error('Erro');
+        todosArtigos = await r.json();
+        todosArtigos.sort((a,b) => (b.dataPublicacao||'').localeCompare(a.dataPublicacao||''));
+        renderizarArtigos(todosArtigos);
+      } catch(e) {
+        document.getElementById('artigosLista').innerHTML = '<p style="color:#dc2626;text-align:center;padding:40px;">Erro ao carregar artigos.</p>';
+      }
     }
+
+    function renderizarArtigos(list) {
+      const el = document.getElementById('artigosLista');
+      if (!list.length) { el.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:40px;">Nenhum artigo publicado.</p>'; return; }
+      el.innerHTML = list.map(a => {
+        const img = a.imagemUrl ? `<img src="${a.imagemUrl}" style="width:100%;height:140px;object-fit:cover;border-radius:var(--radius);margin-bottom:12px;">` : '';
+        const data = a.dataPublicacao ? fmtData(a.dataPublicacao) : 'Sem data';
+        return `<div class="artigo-card">
+          ${img}
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+            <div style="flex:1;">
+              <h4 style="font-family:var(--font-serif);font-size:1.1rem;color:var(--deep-navy);margin-bottom:4px;">${a.titulo||'Sem título'}</h4>
+              ${a.subtitulo ? `<p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:4px;">${a.subtitulo}</p>` : ''}
+              <p style="font-size:0.8rem;color:var(--text-muted);">Por ${a.autor||'Anônimo'} · ${data}</p>
+            </div>
+            <div style="display:flex;gap:6px;flex-shrink:0;">
+              <button onclick="abrirModalArtigo('${a.id}')" style="padding:4px 10px;font-size:0.8rem;border:1px solid var(--border);border-radius:var(--radius);background:#fff;cursor:pointer;">Editar</button>
+              <button onclick="excluirArtigo('${a.id}')" style="padding:4px 10px;font-size:0.8rem;border:1px solid #fecaca;border-radius:var(--radius);background:#fef2f2;color:#dc2626;cursor:pointer;">Excluir</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    function filtrarArtigos() {
+      const t = document.getElementById('buscaArtigo').value.toLowerCase().trim();
+      if (!t) { renderizarArtigos(todosArtigos); return; }
+      renderizarArtigos(todosArtigos.filter(a => (a.titulo||'').toLowerCase().includes(t) || (a.autor||'').toLowerCase().includes(t)));
+    }
+
+    function abrirModalArtigo(id) {
+      document.getElementById('artigoForm').reset();
+      document.getElementById('artigoId').value = '';
+      document.getElementById('artigoImagemPreview').innerHTML = '';
+      document.getElementById('artigoImagemUrl').value = '';
+      if (id) {
+        const a = todosArtigos.find(x => x.id === id);
+        if (!a) return;
+        document.getElementById('artigoModalTitulo').textContent = 'Editar Artigo';
+        document.getElementById('artigoId').value = a.id;
+        document.getElementById('artigoTitulo').value = a.titulo||'';
+        document.getElementById('artigoSubtitulo').value = a.subtitulo||'';
+        document.getElementById('artigoAutor').value = a.autor||'';
+        document.getElementById('artigoData').value = a.dataPublicacao||'';
+        document.getElementById('artigoConteudo').value = a.conteudo||'';
+        document.getElementById('artigoImagemUrl').value = a.imagemUrl||'';
+        if (a.imagemUrl) document.getElementById('artigoImagemPreview').innerHTML = `<img src="${a.imagemUrl}" style="max-height:120px;border-radius:var(--radius);">`;
+      } else {
+        document.getElementById('artigoModalTitulo').textContent = 'Novo Artigo';
+        document.getElementById('artigoData').value = new Date().toISOString().split('T')[0];
+      }
+      document.getElementById('artigoModal').style.display = 'flex';
+    }
+
+    function fecharModalArtigo() { document.getElementById('artigoModal').style.display = 'none'; }
+
+    async function previewArtigoImagem(input) {
+      if (input.files && input.files[0]) {
+        if (input.files[0].size > 1024*1024) { alert('Máximo 1MB.'); input.value=''; return; }
+        const b = await toBase64(input.files[0]);
+        document.getElementById('artigoImagemUrl').value = b;
+        document.getElementById('artigoImagemPreview').innerHTML = `<img src="${b}" style="max-height:120px;border-radius:var(--radius);">`;
+      }
+    }
+
+    async function salvarArtigo(e) {
+      e.preventDefault();
+      const id = document.getElementById('artigoId').value;
+      const btn = document.getElementById('salvarArtigoBtn');
+      btn.disabled = true; btn.textContent = 'Publicando...';
+      const d = { titulo:document.getElementById('artigoTitulo').value, subtitulo:document.getElementById('artigoSubtitulo').value, autor:document.getElementById('artigoAutor').value, dataPublicacao:document.getElementById('artigoData').value, conteudo:document.getElementById('artigoConteudo').value, imagemUrl:document.getElementById('artigoImagemUrl').value };
+      try {
+        const url = id ? `${API_URL}/api/Noticia/${id}` : `${API_URL}/api/Noticia`;
+        const r = await fetch(url, { method:id?'PUT':'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(d) });
+        if (!r.ok) throw new Error('Falha ao salvar');
+        fecharModalArtigo();
+        await carregarArtigos();
+        await carregarStats();
+        alert('Artigo salvo!');
+      } catch(e) { alert('Erro: ' + e.message); }
+      finally { btn.disabled = false; btn.textContent = 'Publicar'; }
+    }
+
+    async function excluirArtigo(id) {
+      const a = todosArtigos.find(x => x.id === id);
+      if (!a || !confirm('Excluir artigo "' + (a.titulo||'') + '"?')) return;
+      try {
+        await fetch(`${API_URL}/api/Noticia/${id}`, { method:'DELETE' });
+        await carregarArtigos();
+        await carregarStats();
+        alert('Excluído.');
+      } catch(e) { alert('Erro: ' + e.message); }
+    }
+
+    // === ESTATUTO ===
+    async function carregarEstatuto() {
+      try {
+        const r = await fetch(API_URL + '/api/Configuracoes');
+        if (!r.ok) return;
+        const cfg = await r.json();
+        if (Array.isArray(cfg) && cfg.length > 0) {
+          estatutoAtual = cfg[0];
+          if (estatutoAtual.estatutoUrl) {
+            document.getElementById('estatutoAtual').innerHTML = `<div style="padding:16px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:var(--radius);display:flex;align-items:center;gap:12px;margin-bottom:16px;"><i data-lucide="file-check" style="width:24px;height:24px;color:#16a34a"></i><div style="flex:1;"><p style="font-weight:600;color:#166534;">Estatuto atual: ${estatutoAtual.estatutoNome || 'Documento salvo'}</p><p style="font-size:0.8rem;color:#15803d;">${estatutoAtual.estatutoData ? 'Atualizado em ' + fmtData(estatutoAtual.estatutoData) : ''}</p></div><a href="${estatutoAtual.estatutoUrl}" target="_blank" style="padding:6px 12px;background:#16a34a;color:#fff;border-radius:var(--radius);font-size:0.8rem;font-weight:600;text-decoration:none;">Baixar</a></div>`;
+            document.getElementById('statEstatuto').textContent = 'OK';
+            lucide.createIcons();
+          }
+        }
+      } catch(e) {}
+    }
+
+    function previewEstatuto(input) {
+      if (input.files && input.files[0]) {
+        const f = input.files[0];
+        if (f.type !== 'application/pdf') { alert('Apenas PDF.'); input.value=''; return; }
+        if (f.size > 2*1024*1024) { alert('Máximo 2MB.'); input.value=''; return; }
+        document.getElementById('estatutoNome').textContent = f.name;
+        document.getElementById('estatutoTamanho').textContent = (f.size/1024).toFixed(0) + ' KB';
+        document.getElementById('estatutoPreview').style.display = 'block';
+        document.getElementById('salvarEstatutoBtn').style.display = 'inline-flex';
+      }
+    }
+
+    async function salvarEstatuto() {
+      const file = document.getElementById('estatutoFile').files[0];
+      if (!file) return;
+      const btn = document.getElementById('salvarEstatutoBtn');
+      btn.disabled = true; btn.textContent = 'Salvando...';
+      try {
+        const base64 = await toBase64(file);
+        const now = new Date().toISOString();
+        const dados = { estatutoUrl: base64, estatutoNome: file.name, estatutoData: now, updated_date: now };
+        let url, method;
+        if (estatutoAtual && estatutoAtual.id) {
+          url = `${API_URL}/api/Configuracoes/${estatutoAtual.id}`;
+          method = 'PUT';
+        } else {
+          dados.id = 'config_principal';
+          dados.created_date = now;
+          url = `${API_URL}/api/Configuracoes`;
+          method = 'POST';
+        }
+        const r = await fetch(url, { method, headers:{'Content-Type':'application/json'}, body:JSON.stringify(dados) });
+        if (!r.ok) throw new Error('Falha ao salvar');
+        await carregarEstatuto();
+        document.getElementById('estatutoPreview').style.display = 'none';
+        document.getElementById('salvarEstatutoBtn').style.display = 'none';
+        document.getElementById('estatutoFile').value = '';
+        alert('Estatuto salvo com sucesso!');
+      } catch(e) { alert('Erro: ' + e.message); }
+      finally { btn.disabled = false; btn.textContent = 'Salvar Estatuto'; }
+    }
+
+    // === UTILS ===
+    function toBase64(file) { return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(file); }); }
+    function fmtCPF(c) { if (!c) return ''; const n = c.replace(/\D/g,''); return n.length===11 ? n.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,'$1.$2.$3-$4') : c; }
+    function fmtData(s) { if (!s) return ''; try { const d = new Date(s); return isNaN(d.getTime()) ? s : d.toLocaleDateString('pt-BR'); } catch(e) { return s; } }
+    function logoutAdmin() { sessionStorage.removeItem('ocomebe_admin'); window.location.href = 'index.html'; }
   </script>
 </body>
 </html>
