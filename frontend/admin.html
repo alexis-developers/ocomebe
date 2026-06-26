@@ -7,6 +7,7 @@
   <meta name="description" content="Painel de controle administrative da OCOMEBE">
   <link rel="icon" type="image/png" href="logo-ocomebe.png">
   <link rel="stylesheet" href="style.css?v=2.0.0">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <script>
     if (sessionStorage.getItem('ocomebe_admin') !== 'ocomeberio2019') {
       window.location.href = 'index.html';
@@ -58,6 +59,7 @@
         <table class="admin-table" style="width:100%; border-collapse:collapse; text-align:left; font-size:0.95rem;">
           <thead>
             <tr style="background:var(--navy-dark); color:#fff; border-bottom:2px solid var(--gold);">
+              <th style="padding:16px 20px;">Foto</th>
               <th style="padding:16px 20px;">Inscrição</th>
               <th style="padding:16px 20px;">Nome</th>
               <th style="padding:16px 20px;">CPF</th>
@@ -69,7 +71,7 @@
           </thead>
           <tbody id="ministrosTbody">
             <tr>
-              <td colspan="7" style="padding:40px; text-align:center; color:var(--text-muted);">Carregando dados dos ministros...</td>
+              <td colspan="8" style="padding:40px; text-align:center; color:var(--text-muted);">Carregando dados dos ministros...</td>
             </tr>
           </tbody>
         </table>
@@ -158,8 +160,17 @@
         </div>
 
         <div class="acesso-form__field" style="grid-column: span 2; margin-bottom:16px;">
-          <label for="fotoUrl" style="margin-bottom:4px; font-size:0.85rem">Link da Foto do Ministro (URL da Imagem)</label>
-          <input type="url" id="fotoUrl" class="acesso-form__input" style="padding:10px 12px; font-size:1rem" placeholder="https://exemplo.com/fotos/pastor.jpg">
+          <label style="margin-bottom:4px; font-size:0.85rem">Foto do Ministro</label>
+          <div style="display:flex; gap:16px; align-items:flex-start;">
+            <div style="flex:1;">
+              <input type="file" id="fotoFile" accept="image/*" onchange="previewFoto(this)" style="width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:var(--radius); font-size:0.9rem; background:#fff;">
+              <p style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">JPG, PNG ou WebP. Máx. 500KB.</p>
+            </div>
+            <div id="fotoPreview" style="width:80px; height:100px; border:2px dashed var(--border); border-radius:6px; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0; background:#f1f5f9;">
+              <span style="font-size:0.7rem; color:var(--text-muted); text-align:center;">Preview</span>
+            </div>
+          </div>
+          <input type="hidden" id="fotoUrl">
         </div>
 
         <div style="grid-column: span 2; display:flex; justify-content:flex-end; gap:12px; margin-top:10px;">
@@ -202,7 +213,7 @@
 
     async function carregarMinistros() {
       const tbody = document.getElementById('ministrosTbody');
-      tbody.innerHTML = `<tr><td colspan="7" style="padding:40px; text-align:center; color:var(--text-muted);">Carregando dados dos ministros...</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="8" style="padding:40px; text-align:center; color:var(--text-muted);">Carregando dados dos ministros...</td></tr>`;
 
       try {
         const response = await fetch(`${API_URL}/api/CadastroGeral`);
@@ -215,7 +226,7 @@
         
         renderizarTabela(todosMinistros);
       } catch (error) {
-        tbody.innerHTML = `<tr><td colspan="7" style="padding:40px; text-align:center; color:#dc2626; font-weight:600;">⚠️ ${error.message}. Verifique a conexão com o Worker.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" style="padding:40px; text-align:center; color:#dc2626; font-weight:600;">⚠️ ${error.message}. Verifique a conexão com o Worker.</td></tr>`;
       }
     }
 
@@ -223,7 +234,7 @@
       const tbody = document.getElementById('ministrosTbody');
       
       if (ministros.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" style="padding:40px; text-align:center; color:var(--text-muted);">Nenhum ministro cadastrado ou encontrado.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" style="padding:40px; text-align:center; color:var(--text-muted);">Nenhum ministro cadastrado ou encontrado.</td></tr>`;
         return;
       }
 
@@ -240,6 +251,9 @@
         
         return `
           <tr style="border-bottom:1px solid var(--border); transition: background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='none'">
+            <td style="padding:14px 20px;">
+              ${m.fotoUrl ? `<img src="${m.fotoUrl}" alt="${m.nome}" style="width:40px;height:50px;object-fit:cover;border-radius:4px;border:1px solid var(--border);">` : `<div style="width:40px;height:50px;background:#f1f5f9;border-radius:4px;border:1px dashed var(--border);display:flex;align-items:center;justify-content:center;"><i data-lucide="user" style="width:18px;height:18px;color:#94a3b8"></i></div>`}
+            </td>
             <td style="padding:14px 20px; font-weight:700; color:var(--navy-dark);">${m.numeroInscricao || '-'}</td>
             <td style="padding:14px 20px; font-weight:600; color:#334155;">${m.nome || '-'}</td>
             <td style="padding:14px 20px; font-family:monospace; color:#475569;">${formatarCPF(m.cpf)}</td>
@@ -262,6 +276,7 @@
           </tr>
         `;
       }).join('');
+      lucide.createIcons();
     }
 
     function filtrarMinistros() {
@@ -286,6 +301,8 @@
       document.getElementById('modalTitulo').textContent = 'Cadastrar Novo Ministro';
       document.getElementById('cadastroForm').reset();
       document.getElementById('ministroId').value = '';
+      document.getElementById('fotoPreview').innerHTML = `<span style="font-size:0.7rem; color:var(--text-muted); text-align:center;">Preview</span>`;
+      document.getElementById('fotoFile').value = '';
       document.getElementById('cadastroModal').style.display = 'flex';
     }
 
@@ -310,6 +327,14 @@
       document.getElementById('email').value = ministro.email || '';
       document.getElementById('fotoUrl').value = ministro.fotoUrl || '';
 
+      const preview = document.getElementById('fotoPreview');
+      if (ministro.fotoUrl) {
+        preview.innerHTML = `<img src="${ministro.fotoUrl}" style="width:100%;height:100%;object-fit:cover;" alt="Foto atual">`;
+      } else {
+        preview.innerHTML = `<span style="font-size:0.7rem; color:var(--text-muted); text-align:center;">Preview</span>`;
+      }
+      document.getElementById('fotoFile').value = '';
+
       document.getElementById('cadastroModal').style.display = 'flex';
     }
 
@@ -326,6 +351,12 @@
 
       const cpfLimpo = document.getElementById('cpf').value.replace(/\D/g, '');
 
+      let fotoBase64 = document.getElementById('fotoUrl').value;
+      const fileInput = document.getElementById('fotoFile');
+      if (fileInput.files && fileInput.files[0]) {
+        fotoBase64 = await fotoParaBase64(fileInput.files[0]);
+      }
+
       const dados = {
         nome: document.getElementById('nome').value,
         cpf: cpfLimpo,
@@ -340,7 +371,7 @@
         anuidadePagaAte: document.getElementById('anuidadePagaAte').value,
         telefone: document.getElementById('telefone').value,
         email: document.getElementById('email').value,
-        fotoUrl: document.getElementById('fotoUrl').value
+        fotoUrl: fotoBase64
       };
 
       try {
@@ -427,6 +458,33 @@
         return dataStr.split('T')[0];
       }
       return dataStr;
+    }
+
+    function previewFoto(input) {
+      const preview = document.getElementById('fotoPreview');
+      if (input.files && input.files[0]) {
+        const file = input.files[0];
+        if (file.size > 500 * 1024) {
+          alert('Arquivo muito grande. Máximo 500KB.');
+          input.value = '';
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          preview.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;" alt="Preview">`;
+          document.getElementById('fotoUrl').value = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function fotoParaBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
     }
   </script>
 </body>
